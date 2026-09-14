@@ -1,0 +1,18 @@
+# Env files (nunca commitear credenciales reales)
+.env
+*.env
+!*.env.example
+
+# Node (cypress, tooling en la raiz)
+node_modules/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Reportes de test generados
+/cypress/videos/
+/cypress/screenshots/
+/cypress/downloads/
