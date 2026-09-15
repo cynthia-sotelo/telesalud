@@ -43,7 +43,7 @@ Desde `api/`:
 ./mvnw spring-boot:run
 ```
 
-El backend queda disponible en `http://localhost:8090`.
+El backend queda disponible en `http://localhost:8081`.
 
 ### 3. Frontend
 
@@ -54,7 +54,7 @@ npm install
 npm run dev
 ```
 
-El frontend queda disponible en `http://localhost:5173`.
+El frontend queda disponible en `http://localhost:5174` (o el puerto que Vite elija si el 5174 está ocupado).
 
 ## Tests
 

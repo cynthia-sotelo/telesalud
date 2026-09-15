@@ -12,6 +12,9 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Crash dumps de la JVM
+hs_err_pid*.log
+
 # Reportes de test generados
 /cypress/videos/
 /cypress/screenshots/
