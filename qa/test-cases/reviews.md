@@ -1,0 +1,12 @@
+# Reseñas
+
+Endpoints: `POST /api/reviews`, `GET /api/specialists/{id}/reviews`.
+
+| ID | Título | Precondición | Pasos | Datos de prueba | Resultado esperado | Prioridad | Tipo | Cubierto por | Resultado |
+|---|---|---|---|---|---|---|---|---|---|
+| TC-REV-01 | Dejar reseña de un turno confirmado | Turno propio en estado CONFIRMED | 1. POST `/reviews` con `bookingId`, `rating`, `comment` | `rating: 5` | 201, reseña creada | Alta | Funcional | `ReviewServiceImplTest.creaReseñaDeTurnoConfirmado`, `BookingFlowIntegrationTest`, manual navegador | Passed |
+| TC-REV-02 | Dejar reseña de un turno no confirmado | Turno propio en estado PENDING o CANCELLED | 1. POST `/reviews` sobre ese turno | — | 400, "Solo se puede reseñar un turno confirmado" | Alta | Borde | `ReviewServiceImplTest.rechazaReseñaDeTurnoNoConfirmado` | Passed |
+| TC-REV-03 | Dejar una segunda reseña sobre el mismo turno | El turno ya tiene una reseña | 1. POST `/reviews` dos veces sobre el mismo `bookingId` | — | La 2da: 400, "Ese turno ya tiene una reseña" | Alta | Borde | `ReviewServiceImplTest.rechazaSegundaReseñaSobreElMismoTurno`, `BookingFlowIntegrationTest` | Passed |
+| TC-REV-04 | Reseñar un turno de otro paciente | Turno pertenece a otro usuario | 1. POST `/reviews` con `bookingId` ajeno | — | 404 | Alta | Seguridad | `ReviewServiceImplTest.rechazaReseñaDeTurnoDeOtroPaciente` | Passed |
+| TC-REV-05 | Rating fuera de rango | Turno confirmado propio | 1. POST `/reviews` con `rating: 0` y luego `rating: 6` | — | 400 en ambos, error de validación (`@Min(1) @Max(5)`) | Media | Negativo | Validación declarativa (`CreateReviewRequest`); falta test explícito | Not run |
+| TC-REV-06 | Listar reseñas de un especialista | El especialista tiene reseñas | 1. GET `/specialists/{id}/reviews` | — | 200, lista de reseñas con nombre del paciente | Media | Funcional | Endpoint implementado; falta test explícito | Not run |

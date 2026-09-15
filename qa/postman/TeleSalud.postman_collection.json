@@ -1,0 +1,612 @@
+{
+  "info": {
+    "name": "TeleSalud API",
+    "description": "Coleccion de pruebas de API para el MVP de TeleSalud. Requiere el backend corriendo en local (ver README) y al menos una especialidad ya cargada en la base (ver qa/sql/seed-specialties.sql) antes de correr esta coleccion desde cero.\n\nOrden de ejecucion recomendado: correr la coleccion completa de punta a punta (Runner o Newman) respetando el orden de las carpetas.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "0. Setup",
+      "item": [
+        {
+          "name": "Listar especialidades (obtiene specialtyId)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('hay al menos una especialidad (seed previo requerido)', () => {",
+                  "  pm.expect(body.length).to.be.greaterThan(0);",
+                  "});",
+                  "if (body.length > 0) pm.environment.set('specialtyId', body[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/specialties" }
+        }
+      ]
+    },
+    {
+      "name": "1. Auth",
+      "item": [
+        {
+          "name": "Registrar especialista",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.environment.set('specialistEmail', 'dra.perez.' + Date.now() + '@telesalud.com');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('devuelve token y rol SPECIALIST', () => {",
+                  "  pm.expect(body.token).to.be.a('string');",
+                  "  pm.expect(body.role).to.eql('SPECIALIST');",
+                  "});",
+                  "pm.environment.set('specialistToken', body.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{specialistEmail}}\",\n  \"password\": \"password123\",\n  \"fullName\": \"Dra Perez\",\n  \"role\": \"SPECIALIST\",\n  \"specialtyId\": \"{{specialtyId}}\",\n  \"bio\": \"Especialista de prueba (Postman)\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Registrar especialista sin specialtyId (400 esperado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('mensaje menciona specialtyId', () => {",
+                  "  pm.expect(pm.response.json().message).to.include('specialtyId');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"sin-especialidad.{{$timestamp}}@telesalud.com\",\n  \"password\": \"password123\",\n  \"fullName\": \"Sin Especialidad\",\n  \"role\": \"SPECIALIST\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Registrar paciente",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.environment.set('patientEmail', 'paciente.' + Date.now() + '@telesalud.com');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('devuelve token y rol PATIENT', () => {",
+                  "  pm.expect(body.token).to.be.a('string');",
+                  "  pm.expect(body.role).to.eql('PATIENT');",
+                  "});",
+                  "pm.environment.set('patientToken', body.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{patientEmail}}\",\n  \"password\": \"password123\",\n  \"fullName\": \"Paciente Postman\",\n  \"role\": \"PATIENT\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Registrar paciente con email duplicado (400 esperado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('mensaje menciona cuenta existente', () => {",
+                  "  pm.expect(pm.response.json().message).to.include('Ya existe una cuenta');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{patientEmail}}\",\n  \"password\": \"password123\",\n  \"fullName\": \"Paciente Duplicado\",\n  \"role\": \"PATIENT\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Login paciente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('devuelve token', () => pm.expect(pm.response.json().token).to.be.a('string'));",
+                  "pm.environment.set('patientToken', pm.response.json().token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{patientEmail}}\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Login con credenciales invalidas (401 esperado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('401 Unauthorized', () => pm.response.to.have.status(401));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{patientEmail}}\",\n  \"password\": \"password-incorrecta\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Especialidades y especialistas",
+      "item": [
+        {
+          "name": "Listar especialistas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('incluye al especialista recien registrado', () => {",
+                  "  const emails = body.map(sp => sp.email);",
+                  "  pm.expect(emails).to.include(pm.environment.get('specialistEmail'));",
+                  "});",
+                  "const created = body.find(sp => sp.email === pm.environment.get('specialistEmail'));",
+                  "if (created) pm.environment.set('specialistId', created.id);"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/specialists" }
+        },
+        {
+          "name": "Filtrar especialistas por especialidad",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/specialists?specialtyId={{specialtyId}}" }
+        }
+      ]
+    },
+    {
+      "name": "3. Horarios",
+      "item": [
+        {
+          "name": "Crear horario (especialista)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const start = new Date(Date.now() + 60 * 60 * 1000);",
+                  "const end = new Date(start.getTime() + 30 * 60 * 1000);",
+                  "pm.environment.set('scheduleStart', start.toISOString());",
+                  "pm.environment.set('scheduleEnd', end.toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('horario creado sin reservar', () => pm.expect(body.booked).to.eql(false));",
+                  "pm.environment.set('scheduleId', body.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{specialistToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startsAt\": \"{{scheduleStart}}\",\n  \"endsAt\": \"{{scheduleEnd}}\"\n}"
+            },
+            "url": "{{baseUrl}}/specialists/me/schedules"
+          }
+        },
+        {
+          "name": "Crear horario con rango invalido (400 esperado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('400 Bad Request', () => pm.response.to.have.status(400));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{specialistToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startsAt\": \"{{scheduleEnd}}\",\n  \"endsAt\": \"{{scheduleStart}}\"\n}"
+            },
+            "url": "{{baseUrl}}/specialists/me/schedules"
+          }
+        },
+        {
+          "name": "Un paciente no puede crear horarios (404 esperado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('404 Not Found', () => pm.response.to.have.status(404));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{patientToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startsAt\": \"{{scheduleStart}}\",\n  \"endsAt\": \"{{scheduleEnd}}\"\n}"
+            },
+            "url": "{{baseUrl}}/specialists/me/schedules"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Turnos",
+      "item": [
+        {
+          "name": "Reservar turno",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('estado CONFIRMED', () => pm.expect(body.status).to.eql('CONFIRMED'));",
+                  "pm.environment.set('bookingId', body.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{patientToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scheduleId\": \"{{scheduleId}}\",\n  \"reason\": \"Consulta de prueba (Postman)\"\n}"
+            },
+            "url": "{{baseUrl}}/bookings"
+          }
+        },
+        {
+          "name": "Reservar el mismo horario dos veces (400 esperado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('mensaje de horario ya reservado', () => {",
+                  "  pm.expect(pm.response.json().message).to.include('ya esta reservado');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{patientToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scheduleId\": \"{{scheduleId}}\",\n  \"reason\": \"Segunda reserva, deberia fallar\"\n}"
+            },
+            "url": "{{baseUrl}}/bookings"
+          }
+        },
+        {
+          "name": "Listar mis turnos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('incluye el turno recien creado', () => {",
+                  "  const ids = pm.response.json().map(b => b.id);",
+                  "  pm.expect(ids).to.include(pm.environment.get('bookingId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{patientToken}}" }],
+            "url": "{{baseUrl}}/bookings/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Reseñas",
+      "item": [
+        {
+          "name": "Dejar reseña de turno confirmado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('rating coincide', () => pm.expect(pm.response.json().rating).to.eql(5));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{patientToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"rating\": 5,\n  \"comment\": \"Excelente atencion (Postman)\"\n}"
+            },
+            "url": "{{baseUrl}}/reviews"
+          }
+        },
+        {
+          "name": "Dejar una segunda reseña sobre el mismo turno (400 esperado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('mensaje de reseña duplicada', () => {",
+                  "  pm.expect(pm.response.json().message).to.include('ya tiene una reseña');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{patientToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"rating\": 3,\n  \"comment\": \"No deberia poder crear esta segunda reseña\"\n}"
+            },
+            "url": "{{baseUrl}}/reviews"
+          }
+        },
+        {
+          "name": "Listar reseñas del especialista",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/specialists/{{specialistId}}/reviews" }
+        }
+      ]
+    },
+    {
+      "name": "6. Cancelacion",
+      "item": [
+        {
+          "name": "Cancelar turno propio",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('204 No Content', () => pm.response.to.have.status(204));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{patientToken}}" }],
+            "url": "{{baseUrl}}/bookings/{{bookingId}}"
+          }
+        },
+        {
+          "name": "Cancelar un turno ya cancelado (400 esperado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('400 Bad Request', () => pm.response.to.have.status(400));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{patientToken}}" }],
+            "url": "{{baseUrl}}/bookings/{{bookingId}}"
+          }
+        },
+        {
+          "name": "El horario cancelado vuelve a estar disponible",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('el schedule liberado aparece en la lista', () => {",
+                  "  const ids = pm.response.json().map(s => s.id);",
+                  "  pm.expect(ids).to.include(pm.environment.get('scheduleId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/specialists/{{specialistId}}/schedules" }
+        },
+        {
+          "name": "Regresion: reservar de nuevo el horario cancelado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201 Created (no 500 por violacion de constraint)', () => pm.response.to.have.status(201));",
+                  "pm.test('estado CONFIRMED', () => pm.expect(pm.response.json().status).to.eql('CONFIRMED'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{patientToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scheduleId\": \"{{scheduleId}}\",\n  \"reason\": \"Regresion: reservar tras cancelar\"\n}"
+            },
+            "url": "{{baseUrl}}/bookings"
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Seguridad",
+      "item": [
+        {
+          "name": "Preflight CORS - origen permitido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('header CORS presente para el origen del frontend', () => {",
+                  "  pm.expect(pm.response.headers.get('Access-Control-Allow-Origin')).to.eql('http://localhost:5174');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "OPTIONS",
+            "header": [
+              { "key": "Origin", "value": "http://localhost:5174" },
+              { "key": "Access-Control-Request-Method", "value": "GET" }
+            ],
+            "url": "{{baseUrl}}/specialties"
+          }
+        },
+        {
+          "name": "Endpoint protegido sin token (401/403 esperado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('401 o 403', () => {",
+                  "  pm.expect([401, 403]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/bookings/me" }
+        }
+      ]
+    }
+  ]
+}

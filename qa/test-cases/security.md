@@ -1,0 +1,8 @@
+# Seguridad transversal (CORS y autorización)
+
+| ID | Título | Precondición | Pasos | Datos de prueba | Resultado esperado | Prioridad | Tipo | Cubierto por | Resultado |
+|---|---|---|---|---|---|---|---|---|---|
+| TC-SEC-01 | El frontend de desarrollo puede llamar a la API (CORS) | Backend corriendo | 1. Request `OPTIONS` (preflight) a cualquier endpoint con `Origin: http://localhost:5174` | — | 200, header `Access-Control-Allow-Origin: http://localhost:5174` presente | Alta | Seguridad | `CorsConfigurationTest.permiteAlFrontendDeDesarrolloLlamarALaApi` | **Failed → Fixed**: encontrado roto el 2026-09-14 durante prueba manual en navegador (bloqueaba TODO el frontend); corregido agregando `CorsConfigurationSource` en `SecurityConfig`. Re-ejecutado: Passed |
+| TC-SEC-02 | Un origen no autorizado no recibe el header CORS | Backend corriendo | 1. Request `OPTIONS` con `Origin: http://sitio-desconocido.com` | — | El header `Access-Control-Allow-Origin` no está presente en la respuesta | Alta | Seguridad | `CorsConfigurationTest.rechazaOrigenesNoAutorizados` | Passed |
+| TC-SEC-03 | Endpoints de escritura requieren autenticación | Ninguna | 1. POST a `/bookings`, `/reviews`, `/specialists/me/schedules` sin token | — | 401/403 en los tres casos | Alta | Seguridad | Configurado en `SecurityConfig.filterChain` (`anyRequest().authenticated()`); falta test explícito por endpoint | Not run |
+| TC-SEC-04 | Endpoints de lectura pública no requieren autenticación | Ninguna | 1. GET a `/specialties`, `/specialists`, `/specialists/{id}/schedules` sin token | — | 200 en los tres casos | Alta | Funcional | Verificado manualmente (la búsqueda de especialistas funciona sin login) | Passed |

@@ -1,0 +1,17 @@
+# Autenticación (registro / login)
+
+Endpoints: `POST /api/auth/register`, `POST /api/auth/login`.
+
+| ID | Título | Precondición | Pasos | Datos de prueba | Resultado esperado | Prioridad | Tipo | Cubierto por | Resultado |
+|---|---|---|---|---|---|---|---|---|---|
+| TC-AUTH-01 | Registro exitoso de paciente | Ninguna | 1. POST `/auth/register` con rol PATIENT | `{email, password (8+), fullName, role: PATIENT}` | 201, body con `token`, `role: PATIENT` | Alta | Funcional | `AuthServiceImplTest`, `AuthControllerIntegrationTest`, manual navegador | Passed |
+| TC-AUTH-02 | Registro exitoso de especialista con especialidad válida | Existe al menos una `Specialty` | 1. POST `/auth/register` con rol SPECIALIST y `specialtyId` válido | `{..., role: SPECIALIST, specialtyId, bio}` | 201, token, se crea el perfil `Specialist` asociado | Alta | Funcional | Manual navegador (Dra Ana Perez) | Passed |
+| TC-AUTH-03 | Registro de especialista sin `specialtyId` | Ninguna | 1. POST `/auth/register` rol SPECIALIST, `specialtyId: null` | — | 400, mensaje "specialtyId es obligatorio..." | Alta | Negativo | `AuthServiceImplTest.rechazaRegistroDeEspecialistaSinEspecialidad` | Passed |
+| TC-AUTH-04 | Registro con email duplicado | Ya existe un usuario con ese email | 1. POST `/auth/register` con email repetido | mismo `email` que un usuario existente | 400, "Ya existe una cuenta con ese email" | Alta | Negativo | `AuthServiceImplTest`, `AuthControllerIntegrationTest.registroConEmailDuplicadoDevuelve400` | Passed |
+| TC-AUTH-05 | Registro con contraseña corta | Ninguna | 1. POST `/auth/register` con password de 5 caracteres | `password: "abc12"` | 400, error de validación sobre `password` | Media | Negativo | — (agregar test unitario de validación) | Not run |
+| TC-AUTH-06 | Registro con email con formato inválido | Ninguna | 1. POST `/auth/register` con `email: "no-es-un-email"` | — | 400, error de validación sobre `email` | Media | Negativo | — | Not run |
+| TC-AUTH-07 | Login exitoso | Usuario ya registrado | 1. POST `/auth/login` con credenciales correctas | email/password del usuario | 200, body con `token` válido | Alta | Funcional | `AuthControllerIntegrationTest.flujoCompletoDeRegistroYLogin` | Passed |
+| TC-AUTH-08 | Login con contraseña incorrecta | Usuario ya registrado | 1. POST `/auth/login` con password incorrecta | password distinta a la registrada | 401 | Alta | Negativo | `AuthControllerIntegrationTest.loginConCredencialesInvalidasDevuelve401` (cubre también el caso de usuario inexistente) | Passed |
+| TC-AUTH-09 | Login con email inexistente | Ninguna | 1. POST `/auth/login` con email que no existe | — | 401 (mismo mensaje genérico que credenciales incorrectas, para no filtrar qué emails existen) | Media | Seguridad | `AuthControllerIntegrationTest.loginConCredencialesInvalidasDevuelve401` | Passed |
+| TC-AUTH-10 | Acceso a endpoint protegido sin token | Ninguna | 1. POST `/bookings` sin header `Authorization` | — | 401/403 (Spring Security rechaza antes de llegar al controller) | Alta | Seguridad | — (agregar test explícito) | Not run |
+| TC-AUTH-11 | Acceso a endpoint protegido con token corrupto/expirado | Token mal formado o vencido | 1. Llamar a `/bookings/me` con `Authorization: Bearer token-invalido` | — | 401/403, `JwtAuthFilter` no autentica, request sigue como anónima | Alta | Seguridad | — (agregar test explícito) | Not run |
