@@ -2,6 +2,7 @@ package com.telesalud.api.exception;
 
 import java.time.Instant;
 import java.util.stream.Collectors;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -20,6 +21,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ApiError> handleBadRequest(BadRequestException ex) {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiError> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        // Red de seguridad ante condiciones de carrera (dos requests casi
+        // simultaneos sobre el mismo recurso) que la validacion de aplicacion
+        // no llega a bloquear a tiempo. Ver qa/test-plan.md, seccion Riesgos.
+        return build(HttpStatus.CONFLICT, "El recurso ya fue modificado por otra operacion. Intenta de nuevo.");
     }
 
     @ExceptionHandler(BadCredentialsException.class)

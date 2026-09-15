@@ -10,7 +10,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
@@ -36,8 +35,12 @@ public class Booking {
             foreignKey = @ForeignKey(name = "fk_booking_patient"))
     private User patient;
 
-    @OneToOne
-    @JoinColumn(name = "schedule_id", nullable = false, unique = true,
+    // ManyToOne (no unique) a proposito: un horario puede tener varios bookings
+    // a lo largo del tiempo si se cancela y se vuelve a reservar. La regla de
+    // "no doble reserva mientras esta activo" la aplica BookingServiceImpl
+    // usando el flag Schedule.booked, no un constraint de base de datos.
+    @ManyToOne
+    @JoinColumn(name = "schedule_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_booking_schedule"))
     private Schedule schedule;
 

@@ -120,6 +120,51 @@ class BookingFlowIntegrationTest {
                 .andExpect(status().isOk());
     }
 
+    @Test
+    void sePuedeReservarNuevamenteUnHorarioLuegoDeCancelarUnaReservaAnterior() throws Exception {
+        // Regresion: la primera version de Booking.schedule tenia un @OneToOne
+        // con constraint UNIQUE en la base, asi que una vez cancelado un turno
+        // el mismo horario nunca podia volver a reservarse (fallaba con un 500
+        // por violacion de constraint). Ver Booking.java y BookingServiceImpl.
+        Specialty specialty = specialtyRepository.save(new Specialty(null, "Dermatologia"));
+
+        String specialistToken = registerAndGetToken(
+                "dr.gomez@telesalud.com", "password123", "Dr Gomez", "SPECIALIST", specialty.getId());
+        String patientToken = registerAndGetToken(
+                "paciente.dos@telesalud.com", "password123", "Paciente Dos", "PATIENT", null);
+
+        String scheduleJson = mockMvc.perform(post("/api/specialists/me/schedules")
+                        .header("Authorization", "Bearer " + specialistToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new ScheduleBody(
+                                Instant.now().plusSeconds(3600).toString(),
+                                Instant.now().plusSeconds(7200).toString()))))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        String scheduleId = objectMapper.readTree(scheduleJson).get("id").asText();
+
+        String firstBookingBody = objectMapper.writeValueAsString(new BookingBody(scheduleId, "Primera reserva"));
+        String firstBookingJson = mockMvc.perform(post("/api/bookings")
+                        .header("Authorization", "Bearer " + patientToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(firstBookingBody))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        String firstBookingId = objectMapper.readTree(firstBookingJson).get("id").asText();
+
+        mockMvc.perform(delete("/api/bookings/" + firstBookingId)
+                        .header("Authorization", "Bearer " + patientToken))
+                .andExpect(status().isNoContent());
+
+        String secondBookingBody = objectMapper.writeValueAsString(new BookingBody(scheduleId, "Segunda reserva"));
+        mockMvc.perform(post("/api/bookings")
+                        .header("Authorization", "Bearer " + patientToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(secondBookingBody))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("CONFIRMED"));
+    }
+
     private String specialistToId(Specialty specialty) {
         return specialistRepository.findBySpecialtyId(specialty.getId()).get(0).getId().toString();
     }
