@@ -155,6 +155,56 @@
           }
         },
         {
+          "name": "Registrar paciente con password corta (400 esperado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('mensaje menciona largo minimo de password', () => {",
+                  "  pm.expect(pm.response.json().message).to.include('al menos 8 caracteres');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"password.corta.{{$timestamp}}@telesalud.com\",\n  \"password\": \"abc12\",\n  \"fullName\": \"Password Corta\",\n  \"role\": \"PATIENT\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Registrar paciente con email invalido (400 esperado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('mensaje menciona formato de email', () => {",
+                  "  pm.expect(pm.response.json().message).to.include('correo electr');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"no-es-un-email\",\n  \"password\": \"password123\",\n  \"fullName\": \"Email Invalido\",\n  \"role\": \"PATIENT\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register"
+          }
+        },
+        {
           "name": "Login paciente",
           "event": [
             {
