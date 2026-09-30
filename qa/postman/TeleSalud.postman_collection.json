@@ -247,6 +247,57 @@
             },
             "url": "{{baseUrl}}/auth/login"
           }
+        },
+        {
+          "name": "Acceso a endpoint protegido sin token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('401 o 403 (sin AuthenticationEntryPoint propio, Spring Security responde 403 al usuario anonimo)', () => {",
+                  "  pm.expect([401, 403]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scheduleId\": \"00000000-0000-0000-0000-000000000000\",\n  \"reason\": \"no deberia llegar a validarse, falta auth\"\n}"
+            },
+            "url": "{{baseUrl}}/bookings"
+          }
+        },
+        {
+          "name": "Acceso a endpoint protegido con token corrupto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('401 o 403 (JwtAuthFilter atrapa el error de parseo y deja la request anonima)', () => {",
+                  "  pm.expect([401, 403]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer 123abc456def" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scheduleId\": \"00000000-0000-0000-0000-000000000000\",\n  \"reason\": \"token corrupto\"\n}"
+            },
+            "url": "{{baseUrl}}/bookings"
+          }
         }
       ]
     },
