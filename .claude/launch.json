@@ -18,6 +18,12 @@
         "export PATH=/c/Program\\ Files/Git/usr/bin:$PATH; cd frontend && ./node_modules/.bin/vite --port 5174"
       ],
       "port": 5174
+    },
+    {
+      "name": "cynthiasotelo-dev",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-l", "4173", "C:/Dev/cynthiasotelo-dev"],
+      "port": 4173
     }
   ]
 }
