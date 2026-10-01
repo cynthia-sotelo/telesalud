@@ -532,7 +532,12 @@
             {
               "listen": "test",
               "script": {
-                "exec": ["pm.test('400 Bad Request', () => pm.response.to.have.status(400));"]
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('mensaje menciona el orden de las fechas', () => {",
+                  "  pm.expect(pm.response.json().message).to.include('endsAt debe ser posterior a startsAt');",
+                  "});"
+                ]
               }
             }
           ],
