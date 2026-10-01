@@ -581,6 +581,31 @@
             },
             "url": "{{baseUrl}}/specialists/me/schedules"
           }
+        },
+        {
+          "name": "Crear horario sin autenticacion (401/403 esperado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('401 o 403', () => {",
+                  "  pm.expect([401, 403]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "noauth" },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startsAt\": \"{{scheduleStart}}\",\n  \"endsAt\": \"{{scheduleEnd}}\"\n}"
+            },
+            "url": "{{baseUrl}}/specialists/me/schedules"
+          }
         }
       ]
     },
