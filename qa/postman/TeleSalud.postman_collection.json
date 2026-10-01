@@ -413,6 +413,56 @@
           "request": { "method": "GET", "url": "{{baseUrl}}/specialists?specialtyId={{specialtyId}}" }
         },
         {
+          "name": "Filtrar especialistas por especialidad valida (con caso de control)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Caso de control: registramos un especialista de OTRA especialidad",
+                  "// (Dermatologia) para que el test realmente pueda detectar una fuga.",
+                  "// Sin esto, filtrar por Cardiologia 'pasaria' igual aunque el filtro",
+                  "// estuviera roto y devolviera todos los especialistas (ver QA-003).",
+                  "const controlName = 'Control Dermatologia ' + Date.now();",
+                  "pm.environment.set('controlDermatoName', controlName);",
+                  "pm.sendRequest({",
+                  "  url: pm.environment.get('baseUrl') + '/auth/register',",
+                  "  method: 'POST',",
+                  "  header: { 'Content-Type': 'application/json' },",
+                  "  body: {",
+                  "    mode: 'raw',",
+                  "    raw: JSON.stringify({",
+                  "      email: 'control.dermato.' + Date.now() + '@telesalud.com',",
+                  "      password: 'password123',",
+                  "      fullName: controlName,",
+                  "      role: 'SPECIALIST',",
+                  "      specialtyId: '58fb3f44-b097-11f1-9c8a-040e3cf001d8',",
+                  "      bio: 'especialista de control para TC-SPEC-03'",
+                  "    })",
+                  "  }",
+                  "}, () => {});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('no incluye al especialista de control de otra especialidad', () => {",
+                  "  const nombres = pm.response.json().map(sp => sp.fullName);",
+                  "  pm.expect(nombres).to.not.include(pm.environment.get('controlDermatoName'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/specialists?specialtyId=58fb1665-b097-11f1-9c8a-040e3cf001d8"
+          }
+        },
+        {
           "name": "Filtrar por especialidad sin especialistas (lista vacia)",
           "event": [
             {
@@ -429,7 +479,7 @@
           ],
           "request": {
             "method": "GET",
-            "url": "{{baseUrl}}/specialists?specialtyId=58fb3f44-b097-11f1-9c8a-040e3cf001d8"
+            "url": "{{baseUrl}}/specialists?specialtyId=21addb7b-bdd2-11f1-8fff-040e3cf001d8"
           }
         }
       ]
