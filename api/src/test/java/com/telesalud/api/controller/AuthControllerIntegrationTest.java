@@ -80,6 +80,41 @@ class AuthControllerIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void registroConSpecialtyIdQueNoEsUnUuidDevuelve400NoUn403() throws Exception {
+        // Regresion: un UUID/enum mal formado en el body hacia que Spring
+        // reenviara internamente a /error para armar la respuesta, y como
+        // /error no estaba en permitAll, Spring Security lo bloqueaba y
+        // devolvia un 403 vacio en vez del 400 real. Ver GlobalExceptionHandler
+        // y SecurityConfig. Encontrado en QA-003 (2026-10-01).
+        String registerBody = "{"
+                + "\"email\":\"specialty-invalido@telesalud.com\","
+                + "\"password\":\"password123\","
+                + "\"fullName\":\"Test\","
+                + "\"role\":\"SPECIALIST\","
+                + "\"specialtyId\":\"xyz\","
+                + "\"bio\":\"test\"}";
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(registerBody))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void registroConRoleQueNoExisteEnElEnumDevuelve400NoUn403() throws Exception {
+        String registerBody = "{"
+                + "\"email\":\"role-invalido@telesalud.com\","
+                + "\"password\":\"password123\","
+                + "\"fullName\":\"Test\","
+                + "\"role\":\"FOO\"}";
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(registerBody))
+                .andExpect(status().isBadRequest());
+    }
+
     private record RegisterPayload(
             String email, String password, String fullName, String role, Object specialtyId, String bio) {
     }

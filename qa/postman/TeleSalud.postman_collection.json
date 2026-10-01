@@ -94,6 +94,56 @@
           }
         },
         {
+          "name": "Registrar con specialtyId invalido (400, no 403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('400 Bad Request (no 403 - ver TC-AUTH-12)', () => pm.response.to.have.status(400));",
+                  "pm.test('mensaje menciona datos invalidos', () => {",
+                  "  pm.expect(pm.response.json().message).to.include('invalidos');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"specialty-invalido.{{$timestamp}}@telesalud.com\",\n  \"password\": \"password123\",\n  \"fullName\": \"Test\",\n  \"role\": \"SPECIALIST\",\n  \"specialtyId\": \"xyz\",\n  \"bio\": \"test\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Registrar con role invalido, no existe en el enum (400, no 403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('400 Bad Request (no 403 - ver TC-AUTH-12)', () => pm.response.to.have.status(400));",
+                  "pm.test('mensaje menciona datos invalidos', () => {",
+                  "  pm.expect(pm.response.json().message).to.include('invalidos');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"role-invalido.{{$timestamp}}@telesalud.com\",\n  \"password\": \"password123\",\n  \"fullName\": \"Test\",\n  \"role\": \"FOO\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register"
+          }
+        },
+        {
           "name": "Registrar paciente",
           "event": [
             {

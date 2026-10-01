@@ -67,6 +67,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET,
                                 "/api/specialties/**", "/api/specialists/**").permitAll()
+                        // Spring reenvia internamente a /error cuando algo falla antes de
+                        // que un @ExceptionHandler pueda actuar (ver GlobalExceptionHandler).
+                        // Sin esto, ese reenvio queda bloqueado para un usuario anonimo y
+                        // devuelve un 403 vacio en vez del error real.
+                        .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
