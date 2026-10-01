@@ -249,6 +249,31 @@
           }
         },
         {
+          "name": "Login con email inexistente (401 esperado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "pm.test('mensaje generico, igual al de password incorrecta (sin user enumeration)', () => {",
+                  "  pm.expect(pm.response.json().message).to.eql('Credenciales invalidas');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nadie.existe.{{$timestamp}}@telesalud.com\",\n  \"password\": \"abc123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
           "name": "Acceso a endpoint protegido sin token",
           "event": [
             {
