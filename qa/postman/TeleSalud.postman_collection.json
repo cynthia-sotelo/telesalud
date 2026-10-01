@@ -560,7 +560,12 @@
             {
               "listen": "test",
               "script": {
-                "exec": ["pm.test('404 Not Found', () => pm.response.to.have.status(404));"]
+                "exec": [
+                  "pm.test('404 Not Found', () => pm.response.to.have.status(404));",
+                  "pm.test('mensaje indica que no tiene perfil de especialista', () => {",
+                  "  pm.expect(pm.response.json().message).to.include('no tiene perfil de especialista');",
+                  "});"
+                ]
               }
             }
           ],
