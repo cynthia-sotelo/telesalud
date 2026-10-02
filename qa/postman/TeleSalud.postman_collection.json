@@ -816,7 +816,12 @@
             {
               "listen": "test",
               "script": {
-                "exec": ["pm.test('400 Bad Request', () => pm.response.to.have.status(400));"]
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('mensaje indica que ya estaba cancelado', () => {",
+                  "  pm.expect(pm.response.json().message).to.include('El turno ya estaba cancelado');",
+                  "});"
+                ]
               }
             }
           ],
