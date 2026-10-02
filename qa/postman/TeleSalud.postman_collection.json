@@ -780,6 +780,31 @@
           }
         },
         {
+          "name": "Dejar reseña sin autenticacion (401/403 esperado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('401 o 403', () => {",
+                  "  pm.expect([401, 403]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "noauth" },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"00000000-0000-0000-0000-000000000000\",\n  \"rating\": 5,\n  \"comment\": \"sin token, no deberia llegar a la logica\"\n}"
+            },
+            "url": "{{baseUrl}}/reviews"
+          }
+        },
+        {
           "name": "Dejar reseña de turno confirmado",
           "event": [
             {
