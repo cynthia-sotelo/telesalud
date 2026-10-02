@@ -16,6 +16,9 @@ Thumbs.db
 hs_err_pid*.log
 
 # Reportes de test generados
-/cypress/videos/
-/cypress/screenshots/
-/cypress/downloads/
+/e2e/node_modules/
+/e2e/playwright-report/
+/e2e/test-results/
+
+# Configuracion local de Claude Code (rutas de la maquina, no va al repo)
+.claude/

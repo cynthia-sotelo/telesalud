@@ -35,8 +35,8 @@ Se aplican varios niveles de prueba, cada uno con una herramienta específica:
 | API (manual + automatizada) | Postman / Newman | `qa/postman/` | Contratos de la API, códigos de estado, reglas de negocio vía HTTP real |
 | Datos | Scripts SQL | `qa/sql/` | Integridad referencial y constraints a nivel de base de datos |
 | Funcional manual | Casos de prueba documentados | `qa/test-cases/` | Flujos de usuario de punta a punta, casos borde |
-| E2E automatizado | Cypress | `cypress/` | Camino feliz y casos borde en el navegador, contra la app real |
-| E2E automatizado (alternativo) | Selenium + Java (JUnit) | `qa/selenium/` | Subset de los mismos flujos, para demostrar ambas herramientas |
+| E2E automatizado *(planificado, en progreso)* | Playwright + TypeScript, con Page Object | `e2e/` | Camino feliz y casos borde en el navegador, contra la app real, más tests de API con el fixture `request` |
+| E2E automatizado secundario *(planificado)* | Selenium + Java (JUnit) | `qa/selenium/` | 3-4 escenarios representativos, no la suite completa |
 
 ### 3.1 Tipos de prueba aplicados
 
@@ -52,7 +52,7 @@ Se aplican varios niveles de prueba, cada uno con una herramienta específica:
 |---|---|---|---|
 | Local (desarrollo/manual) | `./mvnw spring-boot:run` — puerto 8081 | MySQL 8 local (esquema `telesalud`) | `npm run dev` — puerto 5174 |
 | Automatizado (tests JUnit) | Spring Boot embebido | H2 en memoria (perfil `test`) | — |
-| CI (GitHub Actions) | Spring Boot embebido | H2 (unit/integración) + MySQL como servicio del runner (E2E) | Build de Vite servido para Cypress |
+| CI (GitHub Actions) *(planificado)* | Spring Boot embebido | H2 (unit/integración) + MySQL como servicio del runner (E2E) | Build de Vite servido para Playwright |
 
 No se usa Docker Desktop para el flujo principal (no disponible de forma estable en el entorno de desarrollo); MySQL corre como servicio nativo de Windows.
 
@@ -100,6 +100,6 @@ Encontrado explorando la base de datos con SQL directo (no lo detectaban los tes
 - Casos de prueba manuales por módulo (`qa/test-cases/`).
 - Colección Postman + entorno (`qa/postman/`).
 - Scripts de validación SQL (`qa/sql/`).
-- Suite Cypress (`cypress/`).
-- Suite Selenium + Java (`qa/selenium/`).
-- Pipeline de CI que ejecuta todo lo anterior en cada push (`.github/workflows/`).
+- Suite E2E con Playwright + TypeScript (`e2e/`) — *planificado, en progreso*.
+- Suite chica con Selenium + Java (`qa/selenium/`) — *planificado*.
+- Pipeline de CI que ejecuta todo lo anterior en cada push (`.github/workflows/`) — *planificado*.

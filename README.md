@@ -2,12 +2,35 @@
 
 Aplicación web de telemedicina (MVP): conecta pacientes con especialistas médicos. Permite registrarse, buscar especialistas por especialidad, reservar turnos y dejar reseñas.
 
-Este proyecto está inspirado en el dominio de una app de telemedicina construida como trabajo colaborativo grupal en [No Country](https://www.nocountry.tech/), pero es una **reconstrucción propia desde cero**: código, arquitectura y foco distintos. El objetivo principal de este repositorio es servir de base real y funcional para practicar y mostrar un proceso de QA completo (manual + automatizado), no replicar el proyecto original.
+Este proyecto está inspirado en el dominio de una app de telemedicina construida como trabajo colaborativo grupal en [No Country](https://www.nocountry.tech/), pero es una **reconstrucción propia desde cero**: código, arquitectura y foco distintos. El objetivo principal de este repositorio es servir de base real y funcional para practicar y mostrar un proceso de QA completo, no replicar el proyecto original.
+
+## Qué demuestra este repositorio (QA)
+
+| Qué | Dónde | Estado |
+|---|---|---|
+| Plan de pruebas (STLC): alcance, estrategia, ambiente, riesgos | [`qa/test-plan.md`](qa/test-plan.md) | Hecho |
+| **41 casos de prueba** por módulo, con resultado real y trazabilidad | [`qa/test-cases/`](qa/test-cases/) | Todos ejecutados, 0 pendientes |
+| Colección Postman: **39 requests, 69 aserciones**, corre completa con Newman | [`qa/postman/`](qa/postman/) | Hecho |
+| Scripts SQL de integridad de datos y datos de prueba | [`qa/sql/`](qa/sql/) | Hecho |
+| Tests automatizados del backend: **22 tests** (JUnit, Mockito, MockMvc) | [`api/src/test/`](api/src/test/) | Hecho |
+| Automatización E2E con Playwright + TypeScript | — | En progreso |
+| Pipeline de CI con GitHub Actions | — | Pendiente |
+
+### Bugs reales encontrados y corregidos
+
+Encontrados probando la app (no inventados para la demo), cada uno con su causa raíz, su corrección y un test de regresión:
+
+1. **CORS bloqueaba todo el frontend** (TC-SEC-01): el navegador rechazaba cada llamada a la API. Detectado en una prueba manual en el navegador, porque los tests con MockMvc no simulan un origen distinto.
+2. **No se podía volver a reservar un horario después de cancelar el turno** (TC-BOOK-10): un constraint `UNIQUE` en la base hacía fallar la segunda reserva con un error sin manejar. Detectado explorando la base con SQL.
+3. **Un JSON con un UUID o un valor de enum inválido devolvía un 403 vacío en vez de un 400** (TC-AUTH-12): Spring reenviaba internamente a `/error`, que no estaba permitido, y Spring Security lo bloqueaba escondiendo el error real.
+
+El detalle de cada hallazgo está en [`qa/test-plan.md`](qa/test-plan.md) y en las tablas de [`qa/test-cases/`](qa/test-cases/).
 
 ## Funcionalidades (MVP)
 
 - Registro y login de pacientes y especialistas (JWT)
 - Búsqueda y listado de especialistas por especialidad
+- Carga de horarios por parte del especialista
 - Ver disponibilidad y reservar turnos
 - Cancelar turnos propios
 - Dejar reseña a un especialista tras un turno confirmado
@@ -18,8 +41,7 @@ Fuera de alcance por ahora (backlog, no implementado): pagos, subida de avatar/i
 
 - **Backend**: Spring Boot 4, Java 21, Spring Security (JWT), Spring Data JPA, MySQL
 - **Frontend**: React, TypeScript, Vite
-- **Testing**: JUnit + Mockito (backend), Vitest + React Testing Library (frontend), Cypress (E2E), Selenium + Java (E2E), Postman/Newman (API), scripts SQL (validación de datos)
-- **CI**: GitHub Actions
+- **QA**: JUnit + Mockito + MockMvc (H2 en memoria), Postman + Newman, scripts SQL
 
 ## Requisitos
 
@@ -32,6 +54,12 @@ Fuera de alcance por ahora (backlog, no implementado): pagos, subida de avatar/i
 ### 1. Base de datos
 
 Con MySQL Workbench (o la herramienta que prefieras), crear un esquema vacío llamado `telesalud`. Las tablas las crea Hibernate automáticamente al levantar el backend.
+
+Cargar las especialidades de prueba (necesarias para registrar especialistas y para la colección de Postman):
+
+```bash
+mysql --default-character-set=utf8mb4 -u root -p telesalud < qa/sql/seed-specialties.sql
+```
 
 ### 2. Backend
 
@@ -56,24 +84,25 @@ npm run dev
 
 El frontend queda disponible en `http://localhost:5174` (o el puerto que Vite elija si el 5174 está ocupado).
 
-## Tests
+## Cómo correr las pruebas
 
-**Backend** (usa H2 en memoria, no necesita MySQL):
+**Tests del backend** (usan H2 en memoria, no necesitan MySQL):
 
 ```bash
 cd api
 ./mvnw test
 ```
 
-**Frontend**:
+**Colección de Postman con Newman** (necesita el backend corriendo y las especialidades cargadas, ver el paso 1):
 
 ```bash
-cd frontend
-npm test
+npx newman run qa/postman/TeleSalud.postman_collection.json -e qa/postman/TeleSalud.postman_environment.json
 ```
 
-**QA**: ver la carpeta [`qa/`](qa/) para el plan de pruebas, casos de prueba manuales, colección Postman y scripts SQL de validación. La suite E2E vive en [`cypress/`](cypress/) y [`qa/selenium/`](qa/selenium/).
+**Scripts SQL de validación de datos**:
 
-## Licencia
+```bash
+mysql --default-character-set=utf8mb4 -u root -p telesalud < qa/sql/data-integrity-checks.sql
+```
 
-MIT.
+Cada consulta documenta el resultado esperado; en una base sana todas devuelven 0 filas.
