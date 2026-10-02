@@ -669,6 +669,34 @@
           }
         },
         {
+          "name": "Reservar un scheduleId inexistente (404 esperado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('404 Not Found', () => pm.response.to.have.status(404));",
+                  "pm.test('mensaje indica horario no encontrado', () => {",
+                  "  pm.expect(pm.response.json().message).to.include('Horario no encontrado');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{patientToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scheduleId\": \"00000000-0000-0000-0000-000000000000\",\n  \"reason\": \"horario que no existe\"\n}"
+            },
+            "url": "{{baseUrl}}/bookings"
+          }
+        },
+        {
           "name": "Listar mis turnos",
           "event": [
             {
