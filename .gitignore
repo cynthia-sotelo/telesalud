@@ -3,7 +3,7 @@
 *.env
 !*.env.example
 
-# Node (cypress, tooling en la raiz)
+# Node (tooling en la raiz)
 node_modules/
 
 # OS / editor
