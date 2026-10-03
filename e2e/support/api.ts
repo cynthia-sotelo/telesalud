@@ -53,6 +53,19 @@ export function futureWindowIso(minutesFromNow = 60): { startsAt: string; endsAt
   return { startsAt: start.toISOString(), endsAt: end.toISOString() };
 }
 
+export async function createBookingViaApi(
+  request: APIRequestContext,
+  patientToken: string,
+  scheduleId: string,
+): Promise<{ id: string }> {
+  const response = await request.post(`${API_URL}/bookings`, {
+    headers: { Authorization: `Bearer ${patientToken}` },
+    data: { scheduleId, reason: 'turno creado por un test de Playwright' },
+  });
+  expect(response.status(), 'la reserva del turno deberia dar 201').toBe(201);
+  return response.json();
+}
+
 export async function createScheduleViaApi(
   request: APIRequestContext,
   specialistToken: string,
