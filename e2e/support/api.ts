@@ -17,19 +17,21 @@ export interface AuthResult {
 export async function registerSpecialistViaApi(
   request: APIRequestContext,
   fullName: string,
-): Promise<AuthResult> {
+): Promise<AuthResult & { email: string; password: string }> {
+  const email = uniqueEmail('especialista.pw');
+  const password = 'password123';
   const response = await request.post(`${API_URL}/auth/register`, {
     data: {
       fullName,
-      email: uniqueEmail('especialista.pw'),
-      password: 'password123',
+      email,
+      password,
       role: 'SPECIALIST',
       specialtyId: SPECIALTY_CARDIOLOGIA_ID,
       bio: 'Especialista creado por un test de Playwright',
     },
   });
   expect(response.status(), 'el registro del especialista deberia dar 201').toBe(201);
-  return response.json();
+  return { ...(await response.json()), email, password };
 }
 
 export async function registerPatientViaApi(
