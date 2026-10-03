@@ -1,5 +1,7 @@
 # TeleSalud
 
+[![CI](https://github.com/cynthia-sotelo/telesalud/actions/workflows/ci.yml/badge.svg)](https://github.com/cynthia-sotelo/telesalud/actions/workflows/ci.yml)
+
 Aplicación web de telemedicina (MVP): conecta pacientes con especialistas médicos. Permite registrarse, buscar especialistas por especialidad, reservar turnos y dejar reseñas.
 
 Este proyecto está inspirado en el dominio de una app de telemedicina construida como trabajo colaborativo grupal en [No Country](https://www.nocountry.tech/), pero es una **reconstrucción propia desde cero**: código, arquitectura y foco distintos. El objetivo principal de este repositorio es servir de base real y funcional para practicar y mostrar un proceso de QA completo, no replicar el proyecto original.
@@ -13,8 +15,8 @@ Este proyecto está inspirado en el dominio de una app de telemedicina construid
 | Colección Postman: **39 requests, 69 aserciones**, corre completa con Newman | [`qa/postman/`](qa/postman/) | Hecho |
 | Scripts SQL de integridad de datos y datos de prueba | [`qa/sql/`](qa/sql/) | Hecho |
 | Tests automatizados del backend: **22 tests** (JUnit, Mockito, MockMvc) | [`api/src/test/`](api/src/test/) | Hecho |
-| Automatización E2E con Playwright + TypeScript | — | En progreso |
-| Pipeline de CI con GitHub Actions | — | Pendiente |
+| Automatización con Playwright + TypeScript: **9 tests** de UI y de API, con Page Object | [`e2e/`](e2e/) | Hecho |
+| Pipeline de CI con GitHub Actions: backend, frontend e integración (MySQL real + Newman + Playwright) | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | Hecho |
 
 ### Bugs reales encontrados y corregidos
 
@@ -41,7 +43,7 @@ Fuera de alcance por ahora (backlog, no implementado): pagos, subida de avatar/i
 
 - **Backend**: Spring Boot 4, Java 21, Spring Security (JWT), Spring Data JPA, MySQL
 - **Frontend**: React, TypeScript, Vite
-- **QA**: JUnit + Mockito + MockMvc (H2 en memoria), Postman + Newman, scripts SQL
+- **QA**: JUnit + Mockito + MockMvc (H2 en memoria), Postman + Newman, Playwright + TypeScript, scripts SQL, GitHub Actions
 
 ## Requisitos
 
@@ -99,6 +101,17 @@ cd api
 npx newman run qa/postman/TeleSalud.postman_collection.json -e qa/postman/TeleSalud.postman_environment.json
 ```
 
+**Tests de Playwright** (UI y API). Necesitan el backend en `:8081`, el frontend en `:5174` y las especialidades cargadas (paso 1). Se corren desde la carpeta `e2e`:
+
+```bash
+cd e2e
+npm install
+npx playwright install chromium   # solo la primera vez
+npm test
+```
+
+Más detalles en [`e2e/README.md`](e2e/README.md).
+
 **Scripts SQL de validación de datos**:
 
 ```bash
@@ -106,3 +119,7 @@ mysql --default-character-set=utf8mb4 -u root -p telesalud < qa/sql/data-integri
 ```
 
 Cada consulta documenta el resultado esperado; en una base sana todas devuelven 0 filas.
+
+## Integración continua
+
+En cada push a `main` y en cada pull request, GitHub Actions corre tres jobs en paralelo sobre máquinas Linux limpias: los tests del backend, el lint y build del frontend, y una **integración completa** que levanta MySQL, el backend y el frontend, carga las especialidades de prueba y ejecuta la colección de Postman con Newman y la suite de Playwright. El reporte de Playwright se sube siempre como artefacto de la corrida. Ver [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
