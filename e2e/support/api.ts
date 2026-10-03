@@ -35,12 +35,15 @@ export async function registerSpecialistViaApi(
 export async function registerPatientViaApi(
   request: APIRequestContext,
   fullName = 'Paciente Playwright',
-): Promise<AuthResult> {
+): Promise<AuthResult & { email: string; password: string }> {
+  const email = uniqueEmail('paciente.pw');
+  const password = 'password123';
   const response = await request.post(`${API_URL}/auth/register`, {
-    data: { fullName, email: uniqueEmail('paciente.pw'), password: 'password123', role: 'PATIENT' },
+    data: { fullName, email, password, role: 'PATIENT' },
   });
   expect(response.status(), 'el registro del paciente deberia dar 201').toBe(201);
-  return response.json();
+  // Devolvemos tambien email y password: un test de login por UI los necesita.
+  return { ...(await response.json()), email, password };
 }
 
 /** Una franja de 30 minutos en el futuro, en el formato ISO que espera la API. */
