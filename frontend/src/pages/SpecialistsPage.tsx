@@ -6,20 +6,33 @@ import type { Specialist, Specialty } from '../types'
 export function SpecialistsPage() {
   const [specialties, setSpecialties] = useState<Specialty[]>([])
   const [specialtyId, setSpecialtyId] = useState('')
-  const [specialists, setSpecialists] = useState<Specialist[]>([])
-  const [loading, setLoading] = useState(false)
+  // Se guarda junto con la especialidad a la que corresponde: asi "cargando" se deduce de
+  // comparar ambas, sin tener que llamar a setState de forma sincrona dentro del efecto.
+  const [loaded, setLoaded] = useState<{ specialtyId: string; list: Specialist[] } | null>(null)
 
   useEffect(() => {
     apiClient.get<Specialty[]>('/specialties').then(({ data }) => setSpecialties(data))
   }, [])
 
   useEffect(() => {
-    setLoading(true)
+    // "cancelled" descarta la respuesta de un filtro viejo si el usuario cambio de especialidad
+    // antes de que llegara (si no, una respuesta lenta pisaria a la mas nueva).
+    let cancelled = false
     apiClient
       .get<Specialist[]>('/specialists', { params: specialtyId ? { specialtyId } : {} })
-      .then(({ data }) => setSpecialists(data))
-      .finally(() => setLoading(false))
+      .then(({ data }) => {
+        if (!cancelled) setLoaded({ specialtyId, list: data })
+      })
+      .catch(() => {
+        if (!cancelled) setLoaded({ specialtyId, list: [] })
+      })
+    return () => {
+      cancelled = true
+    }
   }, [specialtyId])
+
+  const specialists = loaded?.list ?? []
+  const loading = loaded?.specialtyId !== specialtyId
 
   return (
     <div className="specialists-page">

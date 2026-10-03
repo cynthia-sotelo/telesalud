@@ -1,18 +1,6 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import type { AuthResponse } from '../types'
-
-interface AuthState {
-  token: string | null
-  userId: string | null
-  fullName: string | null
-  role: AuthResponse['role'] | null
-}
-
-interface AuthContextValue extends AuthState {
-  isAuthenticated: boolean
-  login: (auth: AuthResponse) => void
-  logout: () => void
-}
+import { AuthContext, type AuthContextValue, type AuthState } from './context'
 
 const STORAGE_KEYS = {
   token: 'telesalud_token',
@@ -20,8 +8,6 @@ const STORAGE_KEYS = {
   fullName: 'telesalud_full_name',
   role: 'telesalud_role',
 } as const
-
-const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 function readInitialState(): AuthState {
   return {
@@ -54,12 +40,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
-
-export function useAuth(): AuthContextValue {
-  const ctx = useContext(AuthContext)
-  if (!ctx) {
-    throw new Error('useAuth debe usarse dentro de un AuthProvider')
-  }
-  return ctx
 }

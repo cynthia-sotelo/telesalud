@@ -7,12 +7,19 @@ function toLocalInputValue(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
-export function SpecialistSchedulePage() {
-  const defaultStart = new Date(Date.now() + 60 * 60 * 1000)
-  const defaultEnd = new Date(defaultStart.getTime() + 30 * 60 * 1000)
+// Franja sugerida: dentro de una hora, de 30 minutos. Se calcula una sola vez al montar la
+// pagina (inicializador de useState): llamar a Date.now() en el cuerpo del componente daria
+// un valor distinto en cada render.
+function defaultWindow(): { startsAt: string; endsAt: string } {
+  const start = new Date(Date.now() + 60 * 60 * 1000)
+  const end = new Date(start.getTime() + 30 * 60 * 1000)
+  return { startsAt: toLocalInputValue(start), endsAt: toLocalInputValue(end) }
+}
 
-  const [startsAt, setStartsAt] = useState(toLocalInputValue(defaultStart))
-  const [endsAt, setEndsAt] = useState(toLocalInputValue(defaultEnd))
+export function SpecialistSchedulePage() {
+  const [defaults] = useState(defaultWindow)
+  const [startsAt, setStartsAt] = useState(defaults.startsAt)
+  const [endsAt, setEndsAt] = useState(defaults.endsAt)
   const [created, setCreated] = useState<Schedule[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
