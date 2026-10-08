@@ -17,6 +17,7 @@ export interface AuthResult {
 export async function registerSpecialistViaApi(
   request: APIRequestContext,
   fullName: string,
+  specialtyId: string = SPECIALTY_CARDIOLOGIA_ID,
 ): Promise<AuthResult & { email: string; password: string }> {
   const email = uniqueEmail('especialista.pw');
   const password = 'password123';
@@ -26,7 +27,7 @@ export async function registerSpecialistViaApi(
       email,
       password,
       role: 'SPECIALIST',
-      specialtyId: SPECIALTY_CARDIOLOGIA_ID,
+      specialtyId,
       bio: 'Especialista creado por un test de Playwright',
     },
   });
@@ -66,6 +67,16 @@ export async function createBookingViaApi(
   });
   expect(response.status(), 'la reserva del turno deberia dar 201').toBe(201);
   return response.json();
+}
+
+/** Busca en la lista publica el id de un especialista por su nombre (usar un nombre unico). */
+export async function findSpecialistId(request: APIRequestContext, fullName: string): Promise<string> {
+  const response = await request.get(`${API_URL}/specialists`);
+  expect(response.status(), 'la lista de especialistas deberia dar 200').toBe(200);
+  const list: { id: string; fullName: string }[] = await response.json();
+  const found = list.find((s) => s.fullName === fullName);
+  expect(found, `el especialista "${fullName}" deberia figurar en la lista publica`).toBeDefined();
+  return found!.id;
 }
 
 export async function createScheduleViaApi(
