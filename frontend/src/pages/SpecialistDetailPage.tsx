@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { apiClient, extractErrorMessage } from '../api/client'
 import { useAuth } from '../auth/useAuth'
+import { formatDay, formatRange } from '../format'
 import type { Schedule } from '../types'
 
 export function SpecialistDetailPage() {
@@ -37,10 +38,13 @@ export function SpecialistDetailPage() {
   return (
     <div className="specialist-detail-page">
       <h1>Horarios disponibles</h1>
+      <p className="page-lead">Elegí el día y la hora que mejor te quede.</p>
 
-      {!isAuthenticated && <p>Necesitas iniciar sesion como paciente para reservar un turno.</p>}
+      {!isAuthenticated && (
+        <p className="notice-info">Necesitas iniciar sesion como paciente para reservar un turno.</p>
+      )}
       {message && (
-        <p role="status" data-testid="booking-success">
+        <p role="status" className="notice-success" data-testid="booking-success">
           {message}
         </p>
       )}
@@ -50,24 +54,33 @@ export function SpecialistDetailPage() {
         </p>
       )}
 
-      <ul className="schedule-list" data-testid="schedule-list">
-        {schedules.map((schedule) => (
-          <li key={schedule.id} data-testid="schedule-item">
-            {new Date(schedule.startsAt).toLocaleString()} - {new Date(schedule.endsAt).toLocaleTimeString()}
-            {isAuthenticated && (
-              <button
-                type="button"
-                onClick={() => handleBook(schedule.id)}
-                disabled={bookingScheduleId === schedule.id}
-                data-testid="book-button"
-              >
-                Reservar
-              </button>
-            )}
-          </li>
-        ))}
-        {schedules.length === 0 && <p data-testid="schedule-empty">No hay horarios disponibles por el momento.</p>}
-      </ul>
+      {schedules.length > 0 && (
+        <ul className="schedule-list" data-testid="schedule-list">
+          {schedules.map((schedule) => (
+            <li key={schedule.id} data-testid="schedule-item">
+              <div>
+                <span className="slot-day">{formatDay(schedule.startsAt)}</span>
+                <span className="slot-time">{formatRange(schedule.startsAt, schedule.endsAt)}</span>
+              </div>
+              {isAuthenticated && (
+                <button
+                  type="button"
+                  onClick={() => handleBook(schedule.id)}
+                  disabled={bookingScheduleId === schedule.id}
+                  data-testid="book-button"
+                >
+                  Reservar
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {schedules.length === 0 && (
+        <p className="empty-state" data-testid="schedule-empty">
+          No hay horarios disponibles por el momento.
+        </p>
+      )}
     </div>
   )
 }

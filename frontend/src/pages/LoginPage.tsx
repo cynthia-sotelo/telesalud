@@ -30,6 +30,7 @@ export function LoginPage() {
   return (
     <div className="auth-page">
       <h1>Ingresar</h1>
+      <p className="page-lead">Entrá a tu cuenta para reservar y gestionar tus turnos.</p>
       <form onSubmit={handleSubmit} data-testid="login-form">
         <label htmlFor="email">Email</label>
         <input

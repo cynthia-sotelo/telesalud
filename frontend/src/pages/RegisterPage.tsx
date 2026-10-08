@@ -46,6 +46,7 @@ export function RegisterPage() {
   return (
     <div className="auth-page">
       <h1>Crear cuenta</h1>
+      <p className="page-lead">Registrate como paciente o como especialista.</p>
       <form onSubmit={handleSubmit} data-testid="register-form">
         <label htmlFor="fullName">Nombre completo</label>
         <input

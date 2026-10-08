@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { apiClient, extractErrorMessage } from '../api/client'
+import { formatDay, formatRange } from '../format'
 import type { Schedule } from '../types'
 
 function toLocalInputValue(date: Date): string {
@@ -44,9 +45,9 @@ export function SpecialistSchedulePage() {
   return (
     <div className="specialist-schedule-page">
       <h1>Mis horarios</h1>
-      <p>Cargá franjas horarias para que los pacientes puedan reservar turnos con vos.</p>
+      <p className="page-lead">Cargá franjas horarias para que los pacientes puedan reservar turnos con vos.</p>
 
-      <form onSubmit={handleSubmit} data-testid="schedule-form">
+      <form className="card" onSubmit={handleSubmit} data-testid="schedule-form">
         <label htmlFor="startsAt">Desde</label>
         <input
           id="startsAt"
@@ -78,15 +79,20 @@ export function SpecialistSchedulePage() {
         </button>
       </form>
 
-      <h2>Horarios creados en esta sesión</h2>
-      <ul className="schedule-list" data-testid="my-schedule-list">
-        {created.map((schedule) => (
-          <li key={schedule.id}>
-            {new Date(schedule.startsAt).toLocaleString()} - {new Date(schedule.endsAt).toLocaleTimeString()}
-          </li>
-        ))}
-        {created.length === 0 && <p>Todavia no cargaste horarios.</p>}
-      </ul>
+      <h2 className="section-title">Horarios creados en esta sesión</h2>
+      {created.length > 0 && (
+        <ul className="schedule-list" data-testid="my-schedule-list">
+          {created.map((schedule) => (
+            <li key={schedule.id}>
+              <div>
+                <span className="slot-day">{formatDay(schedule.startsAt)}</span>
+                <span className="slot-time">{formatRange(schedule.startsAt, schedule.endsAt)}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+      {created.length === 0 && <p className="empty-state">Todavia no cargaste horarios.</p>}
     </div>
   )
 }

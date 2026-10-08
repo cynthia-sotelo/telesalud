@@ -11,7 +11,7 @@ export function NavBar() {
   }
 
   return (
-    <nav className="navbar" data-testid="navbar">
+    <nav className="navbar" data-testid="navbar" aria-label="Principal">
       <Link to="/" className="navbar-brand">
         TeleSalud
       </Link>
@@ -27,8 +27,10 @@ export function NavBar() {
                 Mis turnos
               </Link>
             )}
-            <span data-testid="nav-user-name">{fullName}</span>
-            <button type="button" onClick={handleLogout} data-testid="nav-logout">
+            <span className="navbar-user" data-testid="nav-user-name">
+              {fullName}
+            </span>
+            <button type="button" className="btn-secondary" onClick={handleLogout} data-testid="nav-logout">
               Salir
             </button>
           </>
