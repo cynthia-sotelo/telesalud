@@ -31,7 +31,8 @@ export class MyBookingsPage {
   }
 
   async leaveReview(booking: Locator, rating: number, comment: string): Promise<void> {
-    await booking.getByTestId('review-rating').fill(String(rating));
+    // Las estrellas son radios con nombre accesible ("4 estrellas"); se elige por rol, como lo haria un usuario.
+    await booking.getByRole('radio', { name: new RegExp(`^${rating} estrellas?$`) }).check();
     await booking.getByTestId('review-comment').fill(comment);
     await booking.getByTestId('review-submit').click();
   }

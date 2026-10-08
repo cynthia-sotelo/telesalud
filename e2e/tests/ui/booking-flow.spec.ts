@@ -33,7 +33,9 @@ test.describe('Reserva de turnos (UI)', () => {
     const bookings = new MyBookingsPage(page);
     await bookings.goto();
     await expect(bookings.bookingItems).toHaveCount(1);
-    await expect(bookings.statusOf(bookings.firstBooking)).toHaveText('CONFIRMED');
+    // El texto visible esta en espanol; el valor tecnico queda en data-status (no depende del idioma).
+    await expect(bookings.statusOf(bookings.firstBooking)).toHaveText('Confirmado');
+    await expect(bookings.statusOf(bookings.firstBooking)).toHaveAttribute('data-status', 'CONFIRMED');
     await expect(bookings.firstBooking).toContainText(specialistName);
   });
 });
